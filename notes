@@ -1,0 +1,177 @@
+imputation notes 
+
+(NOTES FROM 2/2)
+
+2/2 lecture:
+imputation is very weakly defined. 
+
+example:
+
+checking age for a person over years
+	ID Age Year
+	1	14	2000
+	1	15	2001
+	1	.	2002
+	1	17	2003
+	1	18	2004
+The missing age is clearly 16. 
+Intuition tells us this. but how to we make the machine know this?
+we need to write a program relating age to year. it's actually very similar to doing regression. it's linear.
+
+
+what about here?
+	ID Age Year
+	1	14	2000
+	1	15	2001
+	1	15	2002
+	1	16	2003
+	1	18	2004
+	This is clearly kinda wrong. To fix it, find duplicates. 2002 should be 16. 
+		reading from the top or the bottom changes the right way: 
+			ID Age Year
+			1	13	2000
+			1	15	2001
+			1	15	2002
+			1	16	2003
+			1	18	2004
+		back to previous example
+	what happened here?
+	the interview/survey time is not a fixed date in a year. sometimes they interview before the bday, sometimes after. so this example is actually correct data. but if we want to do analysis, and we want to talk about something like earnings or educ. or expenditure or something, we may actually still want to make it look like this even though the truth is actually the top one:
+		ID Age Year
+		1	14	2000
+		1	15	2001
+		1	16	2002
+		1	17	2003
+		1	18	2004
+
+
+when we have dots, we try to guess:
+	ID Age Year
+	1	14	2000
+	1	15	2001
+	1	.	2002
+	1	18	2003
+	1	19	2004	
+	1	20	2005
+	1	21	2006
+we want to fill something in. we see a lot of these examples in the real siguation. every time we have missing data, we have to approach it some way. there isn't a perfect answer most of the time. he's not just wanting us to write a program to impute the data, he wants us to explain why we actually make the decision to impute in a certain way.
+
+if you run reg on this,
+	ID Age Year
+	1	14	2000
+	1	15	2001
+	1	.	2002
+	1	17	2003
+	1	18	2004	
+	1	19	2005
+	1	20	2006
+you'll get 16 easily. but with huge datasets, you can't look through the data and find what are the right values. this is why we try to run the regression. when we run the reg, we ignore the characteristics of the particular missing value and assume that all of them follow one sort of rule. (it's 16 if they are 2 ages apart for example.)
+
+but sometimes when you try to impute things other than age, you'll get 
+
+
+example that tom is working on now
+
+	flight data:
+
+	scheduled outgate time 
+	actual outgate time
+	actual takeoff time
+	actual landing time
+	scheduled ingate time
+	actual ingate time
+
+	flight duration (flight duration should be landing time-takeoff time).
+	flight taxiout duration (should be actual takeoff time-actual outgate time)
+
+	in the age data, we knew that the years were actually correct. however, in the flight dataset, we aren't sure that anything is actually correct. if flight duration doesn't agree with (actual landing time-actual takeoff time), we don't know if landing time or takeoff time is wrong, or if the flight duration has been calculated incorrectly.
+
+	actual takeoff time: 1430
+	actual landing time: 1630
+	flight duration: 150 minutes.
+	we have no way of knowing which one is wrong!! 
+	if we know that
+	actual outgate time: 1415
+	we know that it's not impossible for the actual takeoff time to be correct on the basis of the actual outgate time. but actual outgate time could also be wrong.
+	if it's a data recording error, we have more confidence that it's only one piece of info that's incorrect. people aren't likely to mess up 10 of 11 data points. people are more likely to mess up 1 of 11 data points.
+
+	in imputation, we use training test thing to check whether or not  our imputation is correct.
+
+	ID Age Year
+	1	14	2000
+	1	15	2001
+	1	.	2002
+	1	17	2003
+	1	18	2004	
+	1	19	2005
+	1	20	2006
+	test framework would show that 16 is the correct guess.
+
+imputation isn't just for these simple data. tom talks about how he uses it for analyzing hurricane data.
+you can do a regression, or a nonlinear thing- a polynomial regression. we can have a curve.we can use this curve to interpolate the hurricane location for times that were not recording times (the times in betwen the recording times). it can also help us imagine (EXTRAPOLATE) where it was outside of the bounds of the recording times. but this woudld be with LESS CONFIDENCE because it is not between different recording times. we have a confidence interval that shows what is the accuracy of our estimate. 
+
+
+
+when we do train test split, we have situations where the hurricane goes in an unexpected direction. from the historical data, we know that extrapolation is less accurate. kfold shows us that we often get it wrong with extrapolation.
+
+we want our imputation rule to be as simple as possible. accuracy would be good but it's too hard to gague for each imputation. You aren't allowed to say "intuition" in ML. it forces you to actually explain the logic.
+
+----------------------------------------------------
+imputation notes from 2/4
+
+						earnings	occ,ability,age,region,female,education,exp,year
+
+earnings is not missing		x				x
+
+earnings is missing			?				x
+
+treat "earnings is not missing" as old data, and "earnings is missing" as new data.
+we have removed ID because ID actually has nothing to do with earnings- it's just a meaningless label for the data. so we don't want ID to affect our prediction of earnings.
+
+
+
+----------------------------------------------------
+valentines lecture notes 2/11
+
+OVERFITTING
+
+			target		data
+dataset 		yes 	yes
+real world		no 		yes
+we know the "yes" ones
+
+					target				data
+training dataset 		yes 			yes
+testing dataset 	yes(but pretend no)	yes
+real world				no 				yes
+we know the "yes" ones (testing dataset emulates the real world)
+
+overfitting causes a problem when you have a very very accurate prediction for the testing dataset. your predictions for the real world will be less accurate.
+
+data is a dummy = 1 if you see bf going to a certain place at night regularly
+								target		data
+dataset (your friend's dataset)		yes 	yes
+real world (your experience)		no 		yes
+we know the "yes" ones
+
+so we separate friend's dataset into training and testing dataset, establishing the relationhsip between dummy vbl about bf going to a place at night and cheating.
+doing the prediction on the testing dataset, it predicts well.
+
+we're pretty agnostic about the kind of data we use. we can put a ton of things into the data, giving us a better prediction than we would get otherwise.
+
+if you put in enough detail in your training detail, you can always get 100% predictive accuracy for the "testing dataset". as you put in more and more data, you're chopping the data into more and more tiny parts. your data is so specific that it will specify a cheating action already- it would include things like "have they cheated before, have you seen them cheating etc". this works within the training dataset, but not in the real world. 
+
+when you want the model to do the prediction based on a ton of details and the details point to a particular case in the trainig dataset, so the statistic is not very meaningful at all. 
+
+RARE CASES
+a rare case- unconditionally, this is something that very rarely happens.
+Overconfidence: people always feel overconfident bc the evaluation of the things we're measuring are rare cases.
+80% of ppl say that their driving skills are "above the median". people say this makes 30% of ppl irrational. but this isn't irrational bc if there are only two choices, good or bad, changing the baseline for good changes your answer. 
+in ML if you want to learn about something that only rarely happens, predictions will not be very good
+when you separate the dataset into 2 parts, the rare cases (the few instances where the dummy = 1) might only go into one part of the dataset. this makes 
+the machine uses observed data to come up with a prediction. the magic is in how they use the data (aka what type of model is being used). as the model is more and more complicated it becomes closer to intuition. sometimes when you add something totally random and rare to an observation, it changes your whole prediction for that observation. in ML, sometimes you want to investigate these. it can turn out that these are not bad models when we want to imitate how a person is thinking
+
+
+
+
+
